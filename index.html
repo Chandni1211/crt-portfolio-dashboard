@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clinical Reinvention Team Portfolio Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+:root{
+    --blue:#2563eb;
+    --green:#16a34a;
+    --amber:#f59e0b;
+    --red:#dc2626;
+    --bg:#f5f7fb;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI, Arial, sans-serif;
+}
+
+body{
+    background:var(--bg);
+    color:#222;
+}
+
+.header{
+    background:white;
+    padding:25px 30px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.header h1{
+    color:var(--blue);
+    margin-bottom:5px;
+}
+
+.container{
+    padding:25px;
+}
+
+.card{
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+    margin-bottom:20px;
+}
+
+.kpi-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.kpi-value{
+    font-size:2rem;
+    font-weight:700;
+    margin-top:8px;
+}
+
+.blue{color:var(--blue);}
+.green{color:var(--green);}
+.amber{color:var(--amber);}
+.red{color:var(--red);}
+
+.grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.filters{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:15px;
+}
+
+select{
+    padding:10px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    min-width:180px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    background:#eff6ff;
+    padding:12px;
+    text-align:left;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid #eee;
+}
+
+.status{
+    color:white;
+    padding:4px 10px;
+    border-radius:10px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.status-green{
+    background:var(--green);
+}
+
+.status-amber{
+    background:var(--amber);
+}
+
+.status-red{
+    background:var(--red);
+}
+
+.progress{
+    height:8px;
+    background:#e5e7eb;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    background:var(--blue);
+}
+
+#ganttContainer{
+    overflow-x:auto;
+    margin-top:20px;
+}
+
+.gantt-header,
+.gantt-row{
+    display:grid;
+    grid-template-columns:250px repeat(12,1fr);
+    gap:4px;
+    align-items:center;
+}
+
+.gantt-header{
+    font-weight:700;
+    margin-bottom:12px;
+}
+
+.month{
+    text-align:center;
+    font-size:.85rem;
+}
+
+.gantt-name{
+    font-weight:600;
+}
+
+.gantt-cell{
+    height:28px;
+    border-radius:4px;
+}
+
+.green-bar{
+    background:var(--green);
+}
+
+.amber-bar{
+    background:var(--amber);
+}
+
+.red-bar{
+    background:var(--red);
+}
+
+.dep{
+    line-height:2;
+    font-size:15px;
+}
+
+.footer{
+    text-align:center;
+    color:#666;
+    margin-top:25px;
+}
+
+@media(max-width:900px){
+
+    .grid-2{
+        grid-template-columns:1fr;
+    }
+
+    .gantt-header,
+    .gantt-row{
+        min-width:1000px;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>Clinical Reinvention Team Portfolio Dashboard</h1>
+    <p>Project Tracking • Action Management • Milestones • Portfolio Planning</p>
+</div>
+
+<div class="container">
+
+<!-- KPI SECTION -->
+
+<div class="kpi-grid">
+
+    <div class="card">
+        <div>Active Projects</div>
+        <div class="kpi-value blue">12</div>
+    </div>
+
+    <div class="card">
+        <div>On Track</div>
+        <div class="kpi-value green">7</div>
+    </div>
+
+    <div class="card">
+        <div>At Risk</div>
+        <div class="kpi-value amber">3</div>
+    </div>
+
+    <div class="card">
+        <div>Critical</div>
+        <div class="kpi-value red">2</div>
+    </div>
+
+</div>
+
+<!-- CHARTS -->
+
+<div class="grid-2">
+
+<div class="card">
+    <h2>Portfolio Health</h2>
+    <canvas id="healthChart"></canvas>
+</div>
+
+<div class="card">
+    <h2>Projects by Phase</h2>
+    <canvas id="phaseChart"></canvas>
+</div>
+
+</div>
+
+<!-- FILTERS -->
+
+<div class="card">
+
+<h2>Portfolio Filters</h2>
+
+<div class="filters">
+
+<select id="ownerFilter">
+<option value="All">All Owners</option>
+<option>Chandni</option>
+<option>Amy</option>
+<option>Rebecca</option>
+<option>Eunice</option>
+</select>
+
+<select id="programFilter">
+<option value="All">All Programs</option>
+<option>Clinical Operations</option>
+<option>Clinical Education</option>
+<option>Innovation</option>
+<option>Strategic Planning</option>
+</select>
+
+<select id="quarterFilter">
+<option value="All">All Quarters</option>
+<option value="Q1">Q1</option>
+<option value="Q2">Q2</option>
+<option value="Q3">Q3</option>
+<option value="Q4">Q4</option>
+</select>
+
+</div>
+
+</div>
+
+<!-- PROJECT TABLE -->
+
+<div class="card">
+
+<h2>Project Register</h2>
+
+<table id="projectTable">
+
+<thead>
+<tr>
+<th>Project</th>
+<th>Owner</th>
+<th>Program</th>
+<th>Status</th>
+<th>% Complete</th>
+<th>End Date</th>
+</tr>
+</thead>
+
+<tbody></tbody>
+
+</table>
+
+</div>
+
+<!-- GANTT -->
+
+<div class="card">
+
+<h2>Portfolio Roadmap</h2>
+
+<div id="ganttContainer"></div>
+
+</div>
+
+<!-- ACTIONS & MILESTONES -->
+
+<div class="grid-2">
+
+<div class="card">
+
+<h2>Action Items</h2>
+
+<table>
+<tr>
+<th>Action</th>
+<th>Owner</th>
+<th>Due</th>
+</tr>
+
+<tr>
+<td>Validate ROI assumptions</td>
+<td>Chandni</td>
+<td>Jul 05</td>
+</tr>
+
+<tr>
+<td>Finalize seminar speaker list</td>
+<td>Amy</td>
+<td>Jul 10</td>
+</tr>
+
+<tr>
+<td>Budget review</td>
+<td>Rebecca</td>
+<td>Jul 12</td>
+</tr>
+
+<tr>
+<td>User testing schedule</td>
+<td>Eunice</td>
+<td>Jul 15</td>
+</tr>
+
+</table>
+
+</div>
+
+<div class="card">
+
+<h2>Milestone Tracker</h2>
+
+<table>
+
+<tr>
+<th>Milestone</th>
+<th>Status</th>
+</tr>
+
+<tr>
+<td>Workflow Approval</td>
+<td>✅ Complete</td>
+</tr>
+
+<tr>
+<td>Clinical Review</td>
+<td>🟡 In Progress</td>
+</tr>
+
+<tr>
+<td>User Acceptance Testing</td>
+<td>⚪ Not Started</td>
+</tr>
+
+<tr>
+<td>Executive Approval</td>
+<td>⚪ Not Started</td>
+</tr>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- DEPENDENCIES -->
+
+<div class="card">
+
+<h2>Dependency Map</h2>
+
+<div class="dep">
+
+CCCU Optimization<br>
+⬇<br>
+Digital Intake Pilot<br>
+⬇<br>
+Clinical Adoption Program<br>
+⬇<br>
+Operational Metrics Reporting
+
+</div>
+
+</div>
+
+<div class="footer">
+Clinical Reinvention Team Planning Dashboard Prototype
+</div>
+
+</div>
+
+<script>
+
+const projects = [
+
+{
+name:"CCCU Optimization",
+owner:"Chandni",
+program:"Clinical Operations",
+status:"Green",
+completion:80,
+start:"2027-01-01",
+end:"2027-06-30"
+},
+
+{
+name:"CardioVision Seminar",
+owner:"Amy",
+program:"Clinical Education",
+status:"Amber",
+completion:55,
+start:"2027-04-01",
+end:"2027-09-15"
+},
+
+{
+name:"ROI Request BB",
+owner:"Rebecca",
+program:"Strategic Planning",
+status:"Red",
+completion:30,
+start:"2027-06-01",
+end:"2027-08-01"
+},
+
+{
+name:"Digital Intake Pilot",
+owner:"Eunice",
+program:"Innovation",
+status:"Green",
+completion:65,
+start:"2027-03-15",
+end:"2027-11-01"
+},
+
+{
+name:"Scheduling Modernization",
+owner:"Chandni",
+program:"Clinical Operations",
+status:"Amber",
+completion:42,
+start:"2027-07-01",
+end:"2027-12-31"
+}
+
+];
+
+new Chart(
+document.getElementById("healthChart"),
+{
+type:"doughnut",
+data:{
+labels:["Green","Amber","Red"],
+datasets:[{
+data:[7,3,2],
+backgroundColor:[
+"#16a34a",
+"#f59e0b",
+"#dc2626"
+]
+}]
+}
+}
+);
+
+new Chart(
+document.getElementById("phaseChart"),
+{
+type:"bar",
+data:{
+labels:[
+"Initiation",
+"Planning",
+"Execution",
+"Closeout"
+],
+datasets:[{
+data:[2,4,5,1],
+backgroundColor:"#2563eb"
+}]
+},
+options:{
+plugins:{
+legend:{
+display:false
+}
+}
+}
+}
+);
+
+function getQuarter(date){
+
+const month =
+new Date(date).getMonth()+1;
+
+if(month<=3) return "Q1";
+if(month<=6) return "Q2";
+if(month<=9) return "Q3";
+
+return "Q4";
+}
+
+function getFilteredProjects(){
+
+const owner =
+document.getElementById("ownerFilter").value;
+
+const program =
+document.getElementById("programFilter").value;
+
+const quarter =
+document.getElementById("quarterFilter").value;
+
+return projects.filter(project=>{
+
+const ownerMatch =
+owner==="All" ||
+project.owner===owner;
+
+const programMatch =
+program==="All" ||
+project.program===program;
+
+const quarterMatch =
+quarter==="All" ||
+getQuarter(project.start)===quarter ||
+getQuarter(project.end)===quarter;
+
+return ownerMatch &&
+programMatch &&
+quarterMatch;
+
+});
+
+}
+
+function renderTable(){
+
+const table =
+document.querySelector(
+"#projectTable tbody"
+);
+
+const filtered =
+getFilteredProjects();
+
+table.innerHTML="";
+
+filtered.forEach(project=>{
+
+let statusClass="status-green";
+
+if(project.status==="Amber")
+statusClass="status-amber";
+
+if(project.status==="Red")
+statusClass="status-red";
+
+table.innerHTML += `
+<tr>
+<td>${project.name}</td>
+<td>${project.owner}</td>
+<td>${project.program}</td>
+<td>
+<span class="status ${statusClass}">
+${project.status}
+</span>
+</td>
+<td>
+${project.completion}%
+<div class="progress">
+<div class="progress-bar"
+style="width:${project.completion}%">
+</div>
+</div>
+</td>
+<td>${project.end}</td>
+</tr>
+`;
+
+});
+
+}
+
+function renderGantt(){
+
+const container =
+document.getElementById(
+"ganttContainer"
+);
+
+const filtered =
+getFilteredProjects();
+
+container.innerHTML="";
+
+const header =
+document.createElement("div");
+
+header.className="gantt-header";
+
+header.innerHTML=`
+<div>Project</div>
+<div class="month">Jan</div>
+<div class="month">Feb</div>
+<div class="month">Mar</div>
+<div class="month">Apr</div>
+<div class="month">May</div>
+<div class="month">Jun</div>
+<div class="month">Jul</div>
+<div class="month">Aug</div>
+<div class="month">Sep</div>
+<div class="month">Oct</div>
+<div class="month">Nov</div>
+<div class="month">Dec</div>
+`;
+
+container.appendChild(header);
+
+filtered.forEach(project=>{
+
+const start =
+new Date(project.start)
+.getMonth()+1;
+
+const end =
+new Date(project.end)
+.getMonth()+1;
+
+let color="green-bar";
+
+if(project.status==="Amber")
+color="amber-bar";
+
+if(project.status==="Red")
+color="red-bar";
+
+let html =
+`<div class="gantt-name">${project.name}</div>`;
+
+for(let m=1;m<=12;m++){
+
+if(m>=start && m<=end){
+html +=
+`<div class="gantt-cell ${color}"></div>`;
+}
+else{
+html += `<div></div>`;
+}
+
+}
+
+const row =
+document.createElement("div");
+
+row.className="gantt-row";
+row.innerHTML=html;
+
+container.appendChild(row);
+
+});
+
+}
+
+function refresh(){
+
+renderTable();
+renderGantt();
+
+}
+
+document
+.querySelectorAll("select")
+.forEach(filter=>{
+
+filter.addEventListener(
+"change",
+refresh
+);
+
+});
+
+refresh();
+
+</script>
+
+</body>
+</html>
